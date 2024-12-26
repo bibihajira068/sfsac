@@ -31,7 +31,7 @@ class User(AbstractUser, PermissionsMixin):
     google_id = models.CharField(max_length=100, blank=True, null=True, unique=True)
     profile_picture = models.URLField(blank=True, null=True)
     is_google_authenticated = models.BooleanField(default=False)
-    
+    otp = models.CharField(max_length=10, null=True, blank=True)
     objects = UserManager()
 
     USERNAME_FIELD = 'email'  

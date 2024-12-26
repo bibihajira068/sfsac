@@ -1,112 +1,63 @@
-from django.shortcuts import render
-
-# Create your views here.
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
-from .models import SecureFile , FileShare
-from django.http import HttpResponse
-from cryptography.fernet import Fernet
-from django.urls import reverse
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
 from django.utils.timezone import now
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
 from .models import SecureFile, FileShare
-from datetime import timedelta
+from .serializers import SecureFileSerializer, FileShareSerializer
+from django.shortcuts import get_object_or_404
 
+# Upload a secure file
+class SecureFileUploadView(APIView):
+    permission_classes = [IsAuthenticated]
 
-
-class FileUploadView(APIView):
-    parser_classes = (MultiPartParser, FormParser)
-
-    def post(self, request, *args, **kwargs):
-        uploaded_file = request.FILES['file']
-        file_data = uploaded_file.read()
-        
-        encrypted_data, key = SecureFile.encrypt_file(file_data)
-
-        secure_file = SecureFile.objects.create(
-            name=uploaded_file.name,
-            encrypted_file=encrypted_data,
+    def post(self, request):
+        file_data = request.FILES['file'].read()  # Get the file data
+        encrypted_data, key = SecureFile.encrypt_file(file_data)  # Encrypt the file
+        file_instance = SecureFile.objects.create(
+            name=request.data.get('name'),
+            file=request.FILES['file'],
+            uploaded_by=request.user,
             key=key
         )
+        serializer = SecureFileSerializer(file_instance)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        return Response({"message": "File uploaded and encrypted successfully", "file_id": secure_file.id})
+# List all files uploaded by the user
+class SecureFileListView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        files = SecureFile.objects.filter(uploaded_by=request.user)
+        serializer = SecureFileSerializer(files, many=True)
+        return Response(serializer.data)
 
-
-
-class FileDownloadView(APIView):
-    def get(self, request, file_id):
-        try:
-            secure_file = SecureFile.objects.get(id=file_id)
-            cipher = Fernet(secure_file.key)
-            decrypted_data = cipher.decrypt(secure_file.encrypted_file)
-            
-            response = HttpResponse(decrypted_data, content_type="application/octet-stream")
-            response['Content-Disposition'] = f'attachment; filename="{secure_file.name}"'
-            return response
-        except SecureFile.DoesNotExist:
-            return Response({"error": "File not found"}, status=404)
-
-
-
-
-class SharedFileDownloadView(APIView):
-    def get(self, request, share_id):
-        try:
-            share = FileShare.objects.get(id=share_id)
-            if not share.is_valid():
-                return Response({"error": "Link expired"}, status=403)
-
-            cipher = Fernet(share.secure_file.key)
-            decrypted_data = cipher.decrypt(share.secure_file.encrypted_file)
-
-            response = HttpResponse(decrypted_data, content_type="application/octet-stream")
-            response['Content-Disposition'] = f'attachment; filename="{share.secure_file.name}"'
-            return response
-        except FileShare.DoesNotExist:
-            return Response({"error": "Invalid link"}, status=404)
-
-
-
-
+# Share a file
 class FileShareView(APIView):
-    def post(self, request, file_id):
-        try:
-            # Fetch the secure file
-            secure_file = SecureFile.objects.get(id=file_id)
-            
-            # Extract data from the request
-            shared_with = request.data.get("email")
-            permission = request.data.get("permission", "read")  # Default to read permission
-            expiration_days = request.data.get("expiration", 7)  # Default to 7 days
+    permission_classes = [IsAuthenticated]
 
-            # Calculate expiration date
-            expiration_date = now() + timedelta(days=expiration_days)
+    def post(self, request):
+        serializer = FileShareSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save(shared_by=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            # Create the FileShare object
-            share_link = FileShare.objects.create(
-                secure_file=secure_file,
-                shared_with=shared_with,
-                permission=permission,
-                expiration_date=expiration_date
-            )
+# Retrieve a shared file
+class SharedFileDownloadView(APIView):
+    permission_classes = [IsAuthenticated]
 
-            # Generate the shareable link
-            share_url = request.build_absolute_uri(
-                reverse("file-share", kwargs={"share_id": share_link.id})
-            )
+    def get(self, request, share_id):
+        file_share = get_object_or_404(FileShare, id=share_id)
 
-            return Response(
-                {
-                    "message": "Share link created successfully",
-                    "share_link": share_url,
-                },
-                status=status.HTTP_201_CREATED,
-            )
-        except SecureFile.DoesNotExist:
-            return Response(
-                {"error": "File not found"}, status=status.HTTP_404_NOT_FOUND
-            )
+        # Check if the link is expired
+        if file_share.is_expired():
+            return Response({"error": "This share link has expired."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if the user is authorized
+        if file_share.shared_with_user != request.user and file_share.shared_with_email != request.user.email:
+            return Response({"error": "You are not authorized to access this file."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Return file details
+        serializer = SecureFileSerializer(file_share.secure_file)
+        return Response(serializer.data)

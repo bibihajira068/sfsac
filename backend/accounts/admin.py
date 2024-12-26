@@ -12,7 +12,7 @@ class UserAdmin(UserAdmin):
     list_filter = ('is_staff', 'is_superuser', 'is_google_authenticated')
     fieldsets = (
         (None, {'fields': ('email', 'username', 'password')}),
-        ('Personal Info', {'fields': ('google_id', 'profile_picture', 'bio', 'date_of_birth')}),
+        ('Personal Info', {'fields': ('google_id', 'profile_picture', 'bio', 'date_of_birth', 'otp')}),
         ('Permissions', {'fields': ('is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )

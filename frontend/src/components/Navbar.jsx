@@ -1,18 +1,18 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import MenuIcon from '@mui/icons-material/Menu';
-import { useState } from 'react';
+import React, { useState } from "react";
+import { AppBar, Toolbar, IconButton, Typography, Button, Menu, MenuItem, Box } from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
+import { Link } from "react-router-dom";
+import { useUser } from "../context/AuthContext";
 
 const Navbar = () => {
+  const { user, login, logout } = useUser();
   const [anchorEl, setAnchorEl] = useState(null);
+
+  const pages = [
+    { name: "About", path: "/about" },
+    { name: "Services", path: "/services" },
+    { name: "Contact", path: "/contact" },
+  ];
 
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -23,15 +23,39 @@ const Navbar = () => {
   };
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static" color="success">
-        <Toolbar>
+    <AppBar position="static">
+      <Toolbar>
+        {/* Logo */}
+        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          <Link to="/" style={{ textDecoration: "none", color: "inherit" }}>
+            MyApp
+          </Link>
+        </Typography>
+
+        {/* Desktop Menu */}
+        <Box sx={{ display: { xs: "none", md: "flex" } }}>
+          {pages.map((page) => (
+            <Button key={page.name} color="inherit" component={Link} to={page.path}>
+              {page.name}
+            </Button>
+          ))}
+          {user ? (
+            <Button color="inherit" onClick={logout}>
+              Logout
+            </Button>
+          ) : (
+            <Button color="inherit" onClick={login}>
+              Login
+            </Button>
+          )}
+        </Box>
+
+        {/* Mobile Menu */}
+        <Box sx={{ display: { xs: "flex", md: "none" } }}>
           <IconButton
             size="large"
-            edge="start"
             color="inherit"
             aria-label="menu"
-            sx={{ mr: 2 }}
             onClick={handleMenuOpen}
           >
             <MenuIcon />
@@ -40,22 +64,32 @@ const Navbar = () => {
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
             onClose={handleMenuClose}
-            keepMounted
           >
-            <MenuItem onClick={handleMenuClose} component={Link} to="/">Home</MenuItem>
-            <MenuItem onClick={handleMenuClose} component={Link} to="/about">About</MenuItem>
-            <MenuItem onClick={handleMenuClose} component={Link} to="/chatbot">Chat Support</MenuItem>
-            <MenuItem onClick={handleMenuClose} component={Link} to="/dashboard">My Dashboard</MenuItem>
+            {pages.map((page) => (
+              <MenuItem
+                key={page.name}
+                onClick={handleMenuClose}
+                component={Link}
+                to={page.path}
+              >
+                {page.name}
+              </MenuItem>
+            ))}
+            <MenuItem onClick={handleMenuClose}>
+              {user ? (
+                <Button color="inherit" onClick={logout}>
+                  Logout
+                </Button>
+              ) : (
+                <Button color="inherit" onClick={login}>
+                  Login
+                </Button>
+              )}
+            </MenuItem>
           </Menu>
-          <Typography variant="h6" component={Link} to="/" sx={{ flexGrow: 1, textDecoration: 'none', color: 'inherit' }}>
-            Abnormal Security
-          </Typography>
-          <Box>
-            <Button color="inherit" component={Link} to="/login">Login</Button>
-          </Box>
-        </Toolbar>
-      </AppBar>
-    </Box>
+        </Box>
+      </Toolbar>
+    </AppBar>
   );
 };
 
