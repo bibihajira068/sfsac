@@ -1,0 +1,20 @@
+[project]
+name = "sfsac"
+
+# Define services
+[[services]]
+name = "backend"
+build = "./sfsac/backend" # Path to the Django backend folder
+start = "gunicorn backend.wsgi:application --bind 0.0.0.0:${PORT}"
+env = "python"
+
+[[services]]
+name = "frontend"
+build = "./sfsac/frontend" # Path to the React frontend folder
+start = "npm run build && npm run preview -- --port ${PORT}"
+env = "nodejs"
+
+
+[deploy]
+# Define which services should start automatically
+auto_start_services = ["backend", "frontend"]

@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'allauth.socialaccount',
     'dj_rest_auth.registration',
+    ".railway.app",
 
 
 
