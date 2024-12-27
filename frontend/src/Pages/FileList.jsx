@@ -1,23 +1,27 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Box, Button, TextField, Typography, Card, CardContent, CircularProgress, Alert } from '@mui/material';
-import { UserContext } from './UserContext'; // Assuming UserContext is already created
-import axios from 'axios';
+import API from '../utils/api';
+import { useUser } from '../context/AuthContext';
 
 const apiBaseUrl = "http://localhost:8000/api"; // Change as per your API endpoint
 
 
 function FileList() {
   const [files, setFiles] = useState([]);
-  const { user } = useContext(UserContext);
+  const { user } = useUser();
+  const accesstoken = localStorage.getItem("token")
+  // console.log(accesstoken)
 
   useEffect(() => {
     const fetchFiles = async () => {
       try {
-        const response = await axios.get(${apiBaseUrl}/secure-files/list/, {
+        // const response = await axios.get(${apiBaseUrl}/secure-files/list/, {
+        const response = await API.get('/files/listfiles/', {
           headers: {
-            'Authorization': Bearer ${user.token},
+            'Authorization': `Bearer ${accesstoken}`
           },
         });
+        console.log(response.data);
         setFiles(response.data);
       } catch (error) {
         console.error("Error fetching files:", error);

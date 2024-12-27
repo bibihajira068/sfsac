@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Box, Button, TextField, Typography, Card, CardContent, CircularProgress, Alert } from '@mui/material';
-import { UserContext } from './UserContext'; // Assuming UserContext is already created
-import axios from 'axios';
+import { useUser } from '../context/AuthContext';
+import API from '../utils/api';
 
 const apiBaseUrl = "http://localhost:8000/api"; // Change as per your API endpoint
 
@@ -10,18 +10,21 @@ function FileShare() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(null);
-  const { user } = useContext(UserContext);
+  const { user } = useUser();
+  const accesstoken = localStorage.getItem("token")
+  // console.log(accesstoken)
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const response = await axios.post(${apiBaseUrl}/file-share/, {
+      // const response = await axios.post(${apiBaseUrl}/file-share/, {
+      const response = await API.post("files/share/", {
         secure_file: fileId,
         shared_with_email: email,
       }, {
         headers: {
-          'Authorization': Bearer ${user.token},
+          'Authorization': `Bearer ${accesstoken}`,
         },
       });
       setSuccess(response.data);

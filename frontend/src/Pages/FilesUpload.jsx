@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Box, Button, TextField, Typography, Card, CardContent, CircularProgress, Alert } from '@mui/material';
-import { UserContext } from './UserContext'; // Assuming UserContext is already created
 import axios from 'axios';
+import { useUser } from '../context/AuthContext';
+import API from '../utils/api';
 
 const apiBaseUrl = "http://localhost:8000/api"; // Change as per your API endpoint
 
@@ -11,10 +12,12 @@ function FileUpload() {
   const [fileName, setFileName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(null);
-  const { user } = useContext(UserContext);
+  const { user } = useUser();
+  console.log("fileupload", user)
 
   const handleFileChange = (e) => setFile(e.target.files[0]);
-
+  const accesstoken = localStorage.getItem("token")
+  // console.log(accesstoken)
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!file || !fileName) return;
@@ -25,9 +28,10 @@ function FileUpload() {
     formData.append('name', fileName);
 
     try {
-      const response = await axios.post(${apiBaseUrl}/files/upload/, formData, {
+      // const response = await axios.post(${apiBaseUrl}/files/upload/, formData, {
+      const response = await API.post('/files/upload/', formData, {
         headers: {
-          'Authorization': Bearer ${user.token},
+          'Authorization': `Bearer ${accesstoken}`,
           'Content-Type': 'multipart/form-data'
         } 
       });

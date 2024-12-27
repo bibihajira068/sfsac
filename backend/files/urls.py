@@ -3,7 +3,7 @@ from .views import SecureFileUploadView, SecureFileListView, FileShareView, Shar
 
 urlpatterns = [
     path('upload/', SecureFileUploadView.as_view(), name='secure_file_upload'),
-    path('files/', SecureFileListView.as_view(), name='secure_file_list'),
+    path('listfiles/', SecureFileListView.as_view(), name='secure_file_list'),
     path('share/', FileShareView.as_view(), name='file_share'),
     path('shared/<int:share_id>/', SharedFileDownloadView.as_view(), name='shared_file_download'),
 ]

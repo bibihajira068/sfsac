@@ -6,12 +6,14 @@ import { useUser } from "../context/AuthContext";
 
 const Navbar = () => {
   const { user, login, logout } = useUser();
+  console.log("user", user)
   const [anchorEl, setAnchorEl] = useState(null);
 
   const pages = [
     { name: "About", path: "/about" },
-    { name: "Services", path: "/services" },
-    { name: "Contact", path: "/contact" },
+    { name: "Files", path: "/filelist" },
+    { name: "Upload Files", path: "/fileupload" },
+    { name: "Share Files", path: "/fileshare" },
   ];
 
   const handleMenuOpen = (event) => {

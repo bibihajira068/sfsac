@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { TextField, Button, Typography, Box } from '@mui/material';
 import API from '../utils/api';
 import { useNavigate } from 'react-router-dom';
+import { useUser } from '../context/AuthContext';
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [message, setMessage] = useState('');
   const navigate = useNavigate()
+  const {login} = useUser()
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -16,9 +18,13 @@ const Login = () => {
     try {
       console.log(formData)
       const response = await API.post('/user/login/', formData);
-      console.log(response)
+      console.log("userdata", response.data)
       localStorage.setItem('token', response.data.access);
       setMessage('Login successful!');
+
+      const { user } = response.data; 
+      login(user); 
+
       // window.location("/")
       navigate("/")
     } catch (error) {
