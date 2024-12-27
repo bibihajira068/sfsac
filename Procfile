@@ -1,2 +1,2 @@
-backend: python backend/manage.py runserver 0.0.0.0:8000
-frontend: cd frontend && npm run dev
+backend: docker build -t backend ./backend && docker run -p 8000:8000 backend
+frontend: docker build -t frontend ./frontend && docker run -p 3000:3000 frontend
