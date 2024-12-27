@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { TextField, Button, Typography, Box } from '@mui/material';
 import API from '../utils/api';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [message, setMessage] = useState('');
-  // const [navigate] = useNavigate
+  const navigate = useNavigate()
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -13,11 +14,15 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      console.log(formData)
       const response = await API.post('/user/login/', formData);
+      console.log(response)
       localStorage.setItem('token', response.data.access);
       setMessage('Login successful!');
-      window.location("/")
+      // window.location("/")
+      navigate("/")
     } catch (error) {
+      console.log(error)
       setMessage('Invalid credentials. Please try again.');
     }
   };
@@ -33,6 +38,7 @@ const Login = () => {
           margin="normal"
           value={formData.email}
           onChange={handleChange}
+          required
         />
         <TextField
           label="Password"
@@ -42,6 +48,7 @@ const Login = () => {
           margin="normal"
           value={formData.password}
           onChange={handleChange}
+          required
         />
         <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>Login</Button>
       </form>
