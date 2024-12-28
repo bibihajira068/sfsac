@@ -6,62 +6,38 @@ from rest_framework.exceptions import ValidationError
 import random
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
-
-
-User = get_user_model()
-
-#Registration serializers
-class RegistrationSerializer(serializers.ModelSerializer):
-    print("serializers.RegistrationSerializer")
-    password = serializers.CharField(write_only=True, validators=[validate_password])
-    otp = serializers.IntegerField(read_only=True)
-
-    class Meta:
-        model = User
-        fields = ['email', 'username', 'password', 'otp']
-
-    def create(self, validated_data):
-        otp = random.randint(100000, 999999)  
-        user = User.objects.create_user(
-            email=validated_data['email'],
-            username=validated_data['username'],
-            password=validated_data['password'],
-        )
-        user.is_active = False  # Inactive until OTP is verified
-        user.save()
-
-        # Send OTP via email
-        send_mail(
-            subject='Your OTP for Registration',
-            message=f'Your OTP is {otp}',
-            from_email = "akashkr.sahebjung5@gmail.com",
-            recipient_list=[user.email],
-        )
-       
-        user.otp = otp  # Assuming you add an `otp` field to the User model temporarily
-        user.save()
-        return user
-
-#login serializers
-
-# class LoginSerializer(TokenObtainPairSerializer):
-#     def validate(self, attrs):
-#         data = super().validate(attrs)
-#         user = self.user
-
-#         if not user.is_google_authenticated:
-#             if not user.is_active:
-#                 raise ValidationError('User is not active. Please complete the OTP verification.')
-#         data['email'] = user.email
-#         data['username'] = user.username
-#         return data
-    
-        
-        
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from rest_framework.exceptions import AuthenticationFailed
 from accounts.models import User
+
+
+User = get_user_model()
+ 
+################################
+# User Registration Serializer  
+################################
+ 
+class UserRegisterationSerializer(serializers.ModelSerializer):
+    password2 = serializers.CharField(style={'input_type': 'password'}, write_only=True)
+    class Meta:
+        model = User
+        fields = ["email", "username", "password", "password2"]
+        extra_kwargs = {
+            "password": {"write_only": True}
+        }
+
+    # Validating Password and Confirm Password while Registering
+    def validate(self, attrs):
+        if User.objects.filter(email=attrs.get("email")).exists() or User.objects.filter(username=attrs.get("username")).exists():
+            print("nonuniueerror") 
+            raise serializers.ValidationError("User with this email or username already exists...")
+        password = attrs.get('password')
+        password2 = attrs.get('password2')
+        if password != password2:
+            raise serializers.ValidationError("Passwords do not match")
+        return attrs
+
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -85,45 +61,19 @@ class LoginSerializer(serializers.Serializer):
         return data
 
 
-#logout serializers
-
-class LogoutSerializer(serializers.Serializer):
-    refresh = serializers.CharField()
-
-    def validate(self, attrs):
-        self.token = attrs['refresh']
-        return attrs
-
-    def save(self, **kwargs):
-        try:
-            token = RefreshToken(self.token)
-            token.blacklist()
-        except Exception as e:
-            raise ValidationError('Invalid token.')
+ 
 
 
-#otp serializer
-class OTPVerificationSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    # otp = serializers.IntegerField()
-    otp = serializers.CharField()
+################################
+# Verify OTPs Serializer 
+################################
+    
+class VerifyOTPSerializer(serializers.Serializer):
+    email_otp = serializers.CharField(max_length=8)
+    session_key = serializers.CharField(max_length=50)
 
     def validate(self, attrs):
-        email = attrs['email']
-        otp = attrs['otp']
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            raise ValidationError('Invalid email or OTP.')
-        
-        if user.otp != otp:
-            raise ValidationError('Invalid OTP.')
+        email_otp = attrs.get('email_otp')
+        if email_otp is None :
+            raise serializers.ValidationError("Please Enter the OTP")
         return attrs
-
-    def save(self, **kwargs):
-        email = self.validated_data['email']
-        user = User.objects.get(email=email)
-        user.is_active = True  # Activate the user
-        user.otp = None  # Clear OTP
-        user.save()
-        return user

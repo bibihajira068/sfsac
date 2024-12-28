@@ -1,0 +1,1 @@
+Please uncomment the contents of .env file in backend & frontend folders.

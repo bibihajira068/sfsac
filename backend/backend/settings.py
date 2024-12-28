@@ -68,7 +68,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'allauth.socialaccount',
     'dj_rest_auth.registration',
-    ".railway.app",
+    
 
 
 
@@ -197,7 +197,9 @@ CORS_ALLOWED_ORIGINS = [
     "https://example.com",
     "https://sub.example.com",
     "http://localhost:3000",
+    "http://localhost",
     "http://127.0.0.1:3000",
+    "http://127.0.0.1",
 ]
 
 # Django project settings.py
@@ -258,9 +260,3 @@ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
-
-
-
-# Media files (if applicable)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

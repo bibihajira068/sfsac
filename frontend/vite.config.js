@@ -1,24 +1,23 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
-const PORT =  3000; // Use environment variable for PORT if available
-
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-
-  // Development server configuration
   server: {
-    port: PORT,       // Set the port for the dev server
-    host: '0.0.0.0',  // Allow connections from external hosts (useful for Docker or Railway)
+    host: true,
+    port: 3000,
     hmr: {
-      overlay: false, // Disable the HMR overlay (optional)
+      overlay: false,  
     },
+    proxy: {
+      '/api': {
+        target: 'http://backend:8000',
+        changeOrigin: true
+      }
+    }
   },
-
-  // Preview server configuration for `npm run build`
   preview: {
-    port: PORT,       // Preview server port
-    host: '0.0.0.0',  // Allow external access
-  },
-});
+    host: true,
+    port: 3000
+  }
+})
