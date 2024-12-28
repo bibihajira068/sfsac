@@ -1,0 +1,20 @@
+# Frontend Dockerfile
+FROM node:18
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the frontend code
+COPY frontend/ .
+
+# Install dependencies
+RUN npm install
+
+# Build the application
+RUN npm run build
+
+# Expose the port for the frontend
+EXPOSE 3000
+
+# Start the application
+CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "3000"]
